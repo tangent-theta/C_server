@@ -11,6 +11,7 @@
 #define PORT 1201
 #define BUF_SIZE 1024
 
+
 int msg(int fd, char *msg)
 {
 	int len;
@@ -26,33 +27,36 @@ int http(int sock_fd)
 	int request_size;
 	int scaned_size;
 	char buf[BUF_SIZE];
-	char meth_name[16];
-	char url_addr[256];
-	char http_ver[64];
-	char *url_file;
+	char *meth_name;
+	char *url_addr;
+	char *http_ver;
+/*	char *url_file;*/
 
 	/*request -> buf*/
 	request_size = read(sock_fd, buf, BUF_SIZE);
     if (request_size < 0){
+		msg(sock_fd, "500 Internal Server Error")
         perror("Error: Can't read a request");
       	return -1;
     }
 	
 	/*buf -> meth_name, uri_addr, http_ver*/
-    scaned_size = sscanf(buf, "%s %s %s", meth_name, url_addr, http_ver);
+    scaned_size = sscanf(buf, "%ms %ms %ms", &meth_name, &url_addr, &http_ver);
 	if (scaned_size < 0){
 		perror("Error: Can't scan buffer");
 		return -1;
 	}
 	if (strcmp(meth_name, "GET") != 0){
 		msg(sock_fd, "405 Method Not Allowed\n");
-		perror("Error: Unsupported Method");
+		perror("Error: Unsupported Method Requested");
 		return 405;
 	}
 
+	printf("%s\n%s\n", url_addr, url_addr+1);
 	read_fd = open(url_addr+1, O_RDONLY, 0666);
 	if (read_fd == -1){
 		msg(sock_fd, "404 Not Found\n");
+		perror("Error: Non-existing file requested");
 		return 404;
 	}
 
