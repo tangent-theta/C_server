@@ -30,12 +30,13 @@ int http(int sock_fd)
 	char *meth_name;
 	char *url_addr;
 	char *http_ver;
+	char path[30];
 /*	char *url_file;*/
 
 	/*request -> buf*/
 	request_size = read(sock_fd, buf, BUF_SIZE);
     if (request_size < 0){
-		msg(sock_fd, "500 Internal Server Error")
+		msg(sock_fd, "500 Internal Server Error");
         perror("Error: Can't read a request");
       	return -1;
     }
@@ -52,17 +53,23 @@ int http(int sock_fd)
 		return 405;
 	}
 
-	printf("%s\n%s\n", url_addr, url_addr+1);
-	read_fd = open(url_addr+1, O_RDONLY, 0666);
+	snprintf(path, 30, "www%s", url_addr);
+	char *pathpointer = path;
+
+	read_fd = open(pathpointer, O_RDONLY, 0666);
 	if (read_fd == -1){
 		msg(sock_fd, "404 Not Found\n");
 		perror("Error: Non-existing file requested");
 		return 404;
 	}
 
-	msg(sock_fd, "HTTP1.1 200 OK\r\ntext/html\r\n");
+	msg(sock_fd, "200 OK\r\ntext/html\r\n");
 	len = read(read_fd, buf, BUF_SIZE);
 	write(sock_fd, buf, len);
+
+	free(meth_name);
+	free(url_addr);
+	free(http_ver);
 
 	close(read_fd);
 }
@@ -100,7 +107,7 @@ int main(void)
 		return -1;
 	}
 
-/*	while (1) {*/
+	while (1) {
 		write_len = sizeof(write_addr);
 		write_sock_fd = accept(read_sock_fd, (struct sockaddr *)&write_addr, &write_len);
 		if (write_sock_fd < 0) {
@@ -110,8 +117,8 @@ int main(void)
 
 		http(write_sock_fd);
 		close(write_sock_fd);
-		close(read_sock_fd);
-/*	}*/
+	}
+	close(read_sock_fd);
 
 	return 0;
 }
