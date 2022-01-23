@@ -11,68 +11,9 @@
 #define PORT 1201
 #define BUF_SIZE 1024
 
-
-int msg(int fd, char *msg)
-{
-    int len;
-    len = strlen(msg);
-    write(fd, msg, len);
-    return len;
-}
-
-int http(int sock_fd)
-{
-    int len;
-    int read_fd;
-    int request_size;
-    int scaned_size;
-    char buf[BUF_SIZE];
-    char *meth_name;
-    char *url_addr;
-    char *http_ver;
-    char path[30];
-/*  char *url_file;*/
-
-    /*request -> buf*/
-    request_size = read(sock_fd, buf, BUF_SIZE);
-    if (request_size < 0){
-        msg(sock_fd, "500 Internal Server Error");
-        perror("Error: Can't read a request");
-        return -1;
-    }
-
-    /*buf -> meth_name, uri_addr, http_ver*/
-    scaned_size = sscanf(buf, "%ms %ms %ms", &meth_name, &url_addr, &http_ver);
-    if (scaned_size < 0){
-        perror("Error: Can't scan buffer");
-        return -1;
-    }
-    if (strcmp(meth_name, "GET") != 0){
-        msg(sock_fd, "405 Method Not Allowed\n");
-        perror("Error: Unsupported Method Requested");
-        return 405;
-    }
-
-    snprintf(path, 30, "www%s", url_addr);
-    char *pathpointer = path;
-
-    read_fd = open(pathpointer, O_RDONLY, 0666);
-    if (read_fd == -1){
-        msg(sock_fd, "404 Not Found\n");
-        perror("Error: Non-existing file requested");
-        return 404;
-    }
-
-    msg(sock_fd, "200 OK\r\ntext/html\r\n");
-    len = read(read_fd, buf, BUF_SIZE);
-    write(sock_fd, buf, len);
-
-    free(meth_name);
-    free(url_addr);
-    free(http_ver);
-
-    close(read_fd);
-}
+int msg(int fd, char *msg);
+int read_data();
+int http(int sock_fd);
 
 int main(void)
 {
@@ -122,6 +63,78 @@ int main(void)
 
     return 0;
 }
+
+int http(int sock_fd)
+{
+    int len;
+    int read_fd;
+    int request_size;
+    int scaned_size;
+    char buf[BUF_SIZE];
+    char *meth_name;
+    char *url_addr;
+    char *http_ver;
+    char path[30];
+
+    /*request -> buf*/
+    request_size = read(sock_fd, buf, BUF_SIZE);
+    if (request_size < 0){
+        msg(sock_fd, "500 Internal Server Error");
+        perror("Error: Can't read the request");
+        return -1;
+    }
+
+/*	printf("%s\n", buf);*/
+
+    /*buf -> meth_name, uri_addr, http_ver*/
+    scaned_size = sscanf(buf, "%ms %ms %ms", &meth_name, &url_addr, &http_ver);
+    if (scaned_size < 0){
+        perror("Error: Can't scan buffer");
+        return -1;
+    }
+
+    if (strcmp(meth_name, "POST") == 0){
+		read_data(buf);
+    }
+
+    snprintf(path, 30, "www%s", url_addr);
+    char *pathpointer = path;
+	
+	msg(sock_fd, "HTTP/1.1 ");
+
+    read_fd = open(pathpointer, O_RDONLY, 0666);
+    if (read_fd == -1){
+        msg(sock_fd, "404 Not Found\n");
+        perror("Error: Non-existing file requested");
+        return 404;
+    }
+
+    msg(sock_fd, "200 OK\nContent-Type: text/html\n\n");
+    len = read(read_fd, buf, BUF_SIZE);
+    write(sock_fd, buf, len);
+
+    free(meth_name);
+    free(url_addr);
+    free(http_ver);
+
+    close(read_fd);
+}
+
+int msg(int fd, char *msg)
+{
+    int len;
+    len = strlen(msg);
+    write(fd, msg, len);
+    return len;
+}
+
+int read_data(char *request)
+{
+	char *addr;
+	addr = strstr(request, "content");
+	printf("the number = %s\n", addr+8);
+}
+
 
 
 
