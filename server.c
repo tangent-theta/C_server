@@ -10,6 +10,7 @@
 
 #define PORT 1201
 #define BUF_SIZE 1024
+/*#define HTML_PATH "www"*/
 
 
 int msg(int fd, char *msg)
@@ -47,15 +48,16 @@ int http(int sock_fd)
 		perror("Error: Can't scan buffer");
 		return -1;
 	}
+
 	if (strcmp(meth_name, "GET") != 0){
 		msg(sock_fd, "405 Method Not Allowed\n");
 		perror("Error: Unsupported Method Requested");
 		return 405;
 	}
 
-	snprintf(path, 30, "www%s", url_addr);
+    snprintf(path, 30, "www%s", url_addr);
 	char *pathpointer = path;
-
+/*	printf("%s\n", path);*/
 	read_fd = open(pathpointer, O_RDONLY, 0666);
 	if (read_fd == -1){
 		msg(sock_fd, "404 Not Found\n");
@@ -67,11 +69,12 @@ int http(int sock_fd)
 	len = read(read_fd, buf, BUF_SIZE);
 	write(sock_fd, buf, len);
 
-	free(meth_name);
+/*	free(meth_name);
 	free(url_addr);
-	free(http_ver);
+	free(http_ver);*/
 
 	close(read_fd);
+	return 0;
 }
 
 int main(void)
