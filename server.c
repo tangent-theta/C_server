@@ -44,6 +44,9 @@ int http(int sock_fd)
 	
 	/*buf -> meth_name, uri_addr, http_ver*/
     scaned_size = sscanf(buf, "%ms %ms %ms", &meth_name, &url_addr, &http_ver);
+	free(http_ver);
+	printf("afa\n");
+	
 	if (scaned_size < 0){
 		perror("Error: Can't scan buffer");
 		return -1;
@@ -54,25 +57,33 @@ int http(int sock_fd)
 		perror("Error: Unsupported Method Requested");
 		return 405;
 	}
+	free(meth_name);
+	printf("afa\n");
 
 	snprintf(path, 70, "%s%s", HTML_PATH, url_addr);
-	char *pathliteral = path;
+	/*free(url_addr);*/
+/*	char *pathliteral = path;
 	printf("%s\n", path);
 	read_fd = open(pathliteral, 0666, O_RDONLY);
 	if (read_fd == -1){
 		msg(sock_fd, "404 Not Found\n");
 		perror("Error: Non-existing file requested");
 		return 404;
-	}
+	}*/
+
+	printf("afa\n");
 
 	msg(sock_fd, "HTTP/1.1 200 OK\r\ntext/html\r\n");
-	len = read(read_fd, buf, BUF_SIZE);
-	write(sock_fd, buf, len);
+	msg(sock_fd, "hogehoge~\r\n");
 
-/*	free(meth_name);
-	free(url_addr);
-	free(http_ver);*/
+/*	len = read(read_fd, buf, BUF_SIZE);
+	write(sock_fd, buf, len);*/
 
+
+	len = strlen("hoge");
+	write(sock_fd, "hoge", len);
+
+	printf("afa\n");
 	close(read_fd);
 	return 0;
 }
