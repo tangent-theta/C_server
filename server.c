@@ -10,6 +10,7 @@
 
 #define PORT 1201
 #define BUF_SIZE 1024
+#define HTML_PATH "/home/maetaka-2020248/projects_c/C_server/www"
 
 
 int msg(int fd, char *msg)
@@ -47,31 +48,33 @@ int http(int sock_fd)
 		perror("Error: Can't scan buffer");
 		return -1;
 	}
+
 	if (strcmp(meth_name, "GET") != 0){
 		msg(sock_fd, "405 Method Not Allowed\n");
 		perror("Error: Unsupported Method Requested");
 		return 405;
 	}
 
-	snprintf(path, 30, "www%s", url_addr);
-	char *pathpointer = path;
-
-	read_fd = open(pathpointer, O_RDONLY, 0666);
+	snprintf(path, 70, "%s%s", HTML_PATH, url_addr);
+	char *pathliteral = path;
+	printf("%s\n", path);
+	read_fd = open(pathliteral, 0666, O_RDONLY);
 	if (read_fd == -1){
 		msg(sock_fd, "404 Not Found\n");
 		perror("Error: Non-existing file requested");
 		return 404;
 	}
 
-	msg(sock_fd, "200 OK\r\ntext/html\r\n");
+	msg(sock_fd, "HTTP/1.1 200 OK\r\ntext/html\r\n");
 	len = read(read_fd, buf, BUF_SIZE);
 	write(sock_fd, buf, len);
 
-	free(meth_name);
+/*	free(meth_name);
 	free(url_addr);
-	free(http_ver);
+	free(http_ver);*/
 
 	close(read_fd);
+	return 0;
 }
 
 int main(void)
